@@ -1,17 +1,28 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Calendar, ArrowLeft, Users } from 'lucide-react';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Calendar, ArrowLeft, LogOut } from 'lucide-react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AppointmentsTable } from '@/components/admin/AppointmentsTable';
-import { mockAppointments } from '@/data/mockAppointments';
-import { Appointment, AppointmentStatus } from '@/types/appointment';
+import { AnalyticsChart } from '@/components/admin/AnalyticsChart';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { useAppointments } from '@/hooks/useAppointments';
+import { useState, useMemo } from 'react';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppointmentStatus = Database['public']['Enums']['appointment_status'];
 
 export default function AdminPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
+  const { user, isAdmin, isLoading: authLoading, signOut } = useAuth();
+  const { appointments, isLoading: appointmentsLoading, updateStatus } = useAppointments();
   const [activeFilter, setActiveFilter] = useState<'all' | 'scheduled' | 'completed' | 'cancelled'>('all');
-  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && (!user || !isAdmin)) {
+      navigate('/auth');
+    }
+  }, [user, isAdmin, authLoading, navigate]);
 
   const filteredAppointments = useMemo(() => {
     if (activeFilter === 'all') return appointments;
@@ -26,17 +37,25 @@ export default function AdminPage() {
   }), [appointments]);
 
   const handleUpdateStatus = (id: string, status: AppointmentStatus) => {
-    setAppointments(prev =>
-      prev.map(apt =>
-        apt.id === id ? { ...apt, status } : apt
-      )
-    );
-
-    toast({
-      title: "Status Updated",
-      description: `Appointment marked as ${status}`,
-    });
+    updateStatus(id, status);
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
+  if (authLoading || appointmentsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -62,6 +81,10 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
                 <div className="w-10 h-10 rounded-xl bg-gradient-neon flex items-center justify-center shadow-neon">
                   <Calendar className="h-5 w-5 text-primary-foreground" />
                 </div>
@@ -71,7 +94,7 @@ export default function AdminPage() {
 
           {/* Stats */}
           <div className="px-6 py-6">
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
                 { label: 'Total', value: stats.total, color: 'text-foreground' },
                 { label: 'Scheduled', value: stats.scheduled, color: 'text-primary' },
@@ -87,6 +110,11 @@ export default function AdminPage() {
                   <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Analytics Chart */}
+            <div className="mb-8">
+              <AnalyticsChart appointments={appointments} />
             </div>
 
             {/* Filter tabs */}
