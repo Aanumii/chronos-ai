@@ -7,6 +7,8 @@ import { BookingForm } from '@/components/booking/BookingForm';
 import { SuccessModal } from '@/components/booking/SuccessModal';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { submitBooking } from '@/lib/bookingService';
+import { format } from 'date-fns';
 
 export default function BookingPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -25,28 +27,41 @@ export default function BookingPage() {
 
     setIsLoading(true);
 
-    // Simulate API call (replace with actual n8n webhook + Supabase when connected)
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const formattedDate = selectedDate.toLocaleDateString('en-US', {
+    const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+    const displayDate = selectedDate.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
     });
 
-    setAppointmentDetails({
+    const result = await submitBooking({
+      name,
+      email,
       date: formattedDate,
       time: selectedTime,
-      name,
     });
 
     setIsLoading(false);
-    setShowSuccess(true);
 
-    toast({
-      title: "Appointment Scheduled",
-      description: "We'll send a confirmation to your email.",
-    });
+    if (result.success) {
+      setAppointmentDetails({
+        date: displayDate,
+        time: selectedTime,
+        name,
+      });
+      setShowSuccess(true);
+
+      toast({
+        title: "Appointment Scheduled",
+        description: "We'll send a confirmation to your email.",
+      });
+    } else {
+      toast({
+        title: "Booking Failed",
+        description: result.error || "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCloseSuccess = () => {
@@ -72,7 +87,7 @@ export default function BookingPage() {
               <span className="text-xl font-semibold text-foreground">BookFlow</span>
             </div>
             <Button variant="ghost" asChild>
-              <Link to="/admin" className="gap-2">
+              <Link to="/auth" className="gap-2">
                 Admin <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
