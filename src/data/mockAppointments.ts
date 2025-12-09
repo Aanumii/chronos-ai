@@ -1,0 +1,66 @@
+import { Appointment } from '@/types/appointment';
+
+export const mockAppointments: Appointment[] = [
+  {
+    id: '1',
+    name: 'Alex Johnson',
+    email: 'alex@example.com',
+    date: '2024-12-15',
+    time: '10:00 AM',
+    status: 'scheduled',
+    createdAt: '2024-12-08T10:30:00Z',
+  },
+  {
+    id: '2',
+    name: 'Sarah Williams',
+    email: 'sarah@example.com',
+    date: '2024-12-14',
+    time: '2:00 PM',
+    status: 'completed',
+    createdAt: '2024-12-07T14:20:00Z',
+  },
+  {
+    id: '3',
+    name: 'Michael Chen',
+    email: 'michael@example.com',
+    date: '2024-12-13',
+    time: '11:30 AM',
+    status: 'cancelled',
+    createdAt: '2024-12-06T09:15:00Z',
+  },
+  {
+    id: '4',
+    name: 'Emma Davis',
+    email: 'emma@example.com',
+    date: '2024-12-16',
+    time: '3:30 PM',
+    status: 'scheduled',
+    createdAt: '2024-12-08T16:45:00Z',
+  },
+  {
+    id: '5',
+    name: 'James Wilson',
+    email: 'james@example.com',
+    date: '2024-12-12',
+    time: '9:00 AM',
+    status: 'completed',
+    createdAt: '2024-12-05T08:00:00Z',
+  },
+];
+
+export const timeSlots = [
+  '9:00 AM',
+  '9:30 AM',
+  '10:00 AM',
+  '10:30 AM',
+  '11:00 AM',
+  '11:30 AM',
+  '12:00 PM',
+  '12:30 PM',
+  '2:00 PM',
+  '2:30 PM',
+  '3:00 PM',
+  '3:30 PM',
+  '4:00 PM',
+  '4:30 PM',
+];
