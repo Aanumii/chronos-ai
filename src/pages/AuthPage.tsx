@@ -17,10 +17,8 @@ export default function AuthPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!authLoading && user) {
-      if (isAdmin) {
-        navigate('/admin');
-      }
+    if (!authLoading && user && isAdmin) {
+      navigate('/admin');
     }
   }, [user, isAdmin, authLoading, navigate]);
 
@@ -57,10 +55,10 @@ export default function AuthPage() {
             variant: 'destructive',
           });
         } else {
-          // Wait briefly for isAdmin check to complete, then navigate
+          // isAdmin state will update via useEffect, triggering redirect
           toast({
             title: 'Signed In',
-            description: 'Redirecting to dashboard...',
+            description: 'Checking admin access...',
           });
         }
       }
