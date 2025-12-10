@@ -11,7 +11,7 @@ interface BookingData {
 
 export async function submitBooking(data: BookingData): Promise<{ success: boolean; error?: string }> {
   try {
-    // First, send to N8N webhook for AI automation
+    // First, send to N8N webhook and wait for confirmation
     const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: {
@@ -26,11 +26,20 @@ export async function submitBooking(data: BookingData): Promise<{ success: boole
       }),
     });
 
+    // Only proceed if N8N confirms successful processing
     if (!webhookResponse.ok) {
-      console.warn('N8N webhook failed, but continuing with database insert');
+      console.error('N8N webhook failed with status:', webhookResponse.status);
+      return { 
+        success: false, 
+        error: 'Failed to process appointment. Please try again.' 
+      };
     }
 
-    // Insert into Supabase
+    // Wait for N8N response before inserting into database
+    const n8nResult = await webhookResponse.text();
+    console.log('N8N response:', n8nResult);
+
+    // Only insert into Supabase after N8N confirms
     const { error: dbError } = await supabase
       .from('appointments')
       .insert({
