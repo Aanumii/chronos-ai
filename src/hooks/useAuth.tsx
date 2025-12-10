@@ -47,21 +47,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          setTimeout(() => {
-            checkAdminRole(session.user.id).then(setIsAdmin);
+          setTimeout(async () => {
+            const adminStatus = await checkAdminRole(session.user.id);
+            setIsAdmin(adminStatus);
+            setIsLoading(false);
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsLoading(false);
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        checkAdminRole(session.user.id).then(setIsAdmin);
+        const adminStatus = await checkAdminRole(session.user.id);
+        setIsAdmin(adminStatus);
       }
       setIsLoading(false);
     });
