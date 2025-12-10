@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,7 +11,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn, user, isAdmin, isLoading: authLoading } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const { signIn, signUp, user, isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,24 +30,34 @@ export default function AuthPage() {
     setIsLoading(true);
 
     try {
-      const { error: signInError } = await signIn(email, password);
-      
-      if (signInError) {
-        setError('Access Denied — you don\'t have admin privileges');
-        toast({
-          title: 'Access Denied',
-          description: 'Invalid credentials or insufficient privileges',
-          variant: 'destructive',
-        });
-        return;
+      if (isSignUp) {
+        const { error: signUpError } = await signUp(email, password);
+        if (signUpError) {
+          setError(signUpError.message);
+          toast({
+            title: 'Sign Up Failed',
+            description: signUpError.message,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Account Created',
+            description: 'Your account has been created. You can now sign in.',
+          });
+          setIsSignUp(false);
+        }
+      } else {
+        const { error: signInError } = await signIn(email, password);
+        
+        if (signInError) {
+          setError('Access Denied — you don\'t have admin privileges');
+          toast({
+            title: 'Access Denied',
+            description: 'Invalid credentials or insufficient privileges',
+            variant: 'destructive',
+          });
+        }
       }
-
-      // Wait a moment for the auth state to update and check admin status
-      setTimeout(async () => {
-        const { useAuth } = await import('@/hooks/useAuth');
-        // The auth context will handle the redirect if user is admin
-      }, 500);
-      
     } catch (err) {
       setError('Access Denied — you don\'t have admin privileges');
     } finally {
@@ -70,10 +81,12 @@ export default function AuthPage() {
         <div className="glass-panel p-8 animate-fade-up">
           <div className="text-center mb-8">
             <div className="w-16 h-16 rounded-2xl bg-gradient-neon flex items-center justify-center mx-auto mb-4 shadow-neon">
-              <Lock className="h-8 w-8 text-primary-foreground" />
+              {isSignUp ? <User className="h-8 w-8 text-primary-foreground" /> : <Lock className="h-8 w-8 text-primary-foreground" />}
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Admin Login</h1>
-            <p className="text-muted-foreground mt-2">Sign in to access the dashboard</p>
+            <h1 className="text-2xl font-bold text-foreground">{isSignUp ? 'Create Account' : 'Admin Login'}</h1>
+            <p className="text-muted-foreground mt-2">
+              {isSignUp ? 'Sign up for a new account' : 'Sign in to access the dashboard'}
+            </p>
           </div>
 
           {error && (
@@ -105,6 +118,7 @@ export default function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-11"
                 required
+                minLength={6}
               />
             </div>
 
@@ -115,18 +129,31 @@ export default function AuthPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? (isSignUp ? 'Creating Account...' : 'Signing in...') : (isSignUp ? 'Create Account' : 'Sign In')}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/')}
-              className="text-muted-foreground hover:text-foreground"
+          <div className="mt-6 text-center space-y-3">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+              }}
+              className="text-sm text-primary hover:text-primary/80 transition-colors"
             >
-              ← Back to Booking
-            </Button>
+              {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
+            </button>
+            
+            <div>
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/')}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                ← Back to Booking
+              </Button>
+            </div>
           </div>
         </div>
       </div>
