@@ -56,6 +56,12 @@ export default function AuthPage() {
             description: 'Invalid credentials or insufficient privileges',
             variant: 'destructive',
           });
+        } else {
+          // Wait briefly for isAdmin check to complete, then navigate
+          toast({
+            title: 'Signed In',
+            description: 'Redirecting to dashboard...',
+          });
         }
       }
     } catch (err) {
